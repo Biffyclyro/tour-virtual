@@ -115,7 +115,7 @@ export class SceneManager {
 	private createEnvironment() {
 		const geometry = new THREE.SphereGeometry(500, 60, 40);
 		geometry.scale(1, 1, -1)
-		const material = new THREE.MeshBasicMaterial({ map: new THREE.TextureLoader().load(`/assets/${this.sceneState!.stateName}.JPG`) });
+		const material = new THREE.MeshBasicMaterial({ map: new THREE.TextureLoader().load(`./assets/${this.sceneState!.stateName}.JPG`) });
 		//const material = new THREE.MeshBasicMaterial({ map: new THREE.TextureLoader().load('/assets/image-1.jpg') });
 		const skyBox = new THREE.Mesh(geometry, material);
 		this.scene.add(skyBox)
