@@ -5,12 +5,14 @@ import { SceneState } from './SceneState'
 
 export class SceneManager {
 	private readonly controls: OrbitControls
-	private button: THREE.Mesh | undefined
+	private buttonRight: THREE.Mesh | undefined
+	private buttonLeft: THREE.Mesh | undefined
 	private readonly scene: THREE.Scene
 	private readonly camera: THREE.PerspectiveCamera
 	private readonly renderer: THREE.WebGLRenderer
 	private readonly mouse: THREE.Vector2
 	private sceneState: SceneState | undefined;
+	private readonly salaPath: Map<string, SceneState>;
 
 	constructor() {
 		this.scene = new THREE.Scene()
@@ -18,12 +20,21 @@ export class SceneManager {
 		this.renderer = new THREE.WebGLRenderer()
 		this.controls = this.createControls()
 		this.mouse = new THREE.Vector2()
+		this.salaPath = new Map();
+		this.salaPath.set('sala-1', {stateName:'sala-1', path: [{prox: 'sala-7', lat: 400, long: 500}, {prox: 'sala-2', lat: 450, long: 50}]})
+		this.salaPath.set('sala-2', {stateName:'sala-2', path: [{prox: 'sala-1', lat: 400, long: 500}, {prox: 'sala-3', lat: 450, long: 50}]})
+		this.salaPath.set('sala-3', {stateName:'sala-3', path: [{prox: 'sala-2', lat: 500, long: 300}, {prox: 'sala-4', lat: 450, long: 50}]})
+		this.salaPath.set('sala-4', {stateName:'sala-4', path: [{prox: 'sala-3', lat: 350, long: 750}, {prox: 'sala-5', lat: 450, long: 300}]})
+		this.salaPath.set('sala-5', {stateName:'sala-5', path: [{prox: 'sala-4', lat: 550, long: 550}, {prox: 'sala-6', lat: 450, long: 50}]})
+		this.salaPath.set('sala-6', {stateName:'sala-6', path: [{prox: 'sala-5', lat: 400, long: 500}, {prox: 'sala-7', lat: 450, long: 50}]})
+		this.salaPath.set('sala-7', {stateName:'sala-7', path: [{prox: 'sala-6', lat: 400, long: 500}, {prox: 'sala-1', lat: 450, long: 50}]})
 
-		this.sceneState = {stateImage:'/assets/image-1.jpg', path: [{prox: 'outra-sala', lat: 100, long: 200}]}
+		this.sceneState = this.salaPath.get('sala-1')
 
 
 		this.createEnvironment()
-		this.scene.add(this.createButton())
+
+		this.createAllButtons()
 
 
 		this.renderer.setAnimationLoop(() => this.renderer.render(this.scene, this.camera))
@@ -59,24 +70,27 @@ export class SceneManager {
 	}
 
 
-	private createButton(): THREE.Mesh {
+	private createButton({prox, lat, long}:{prox: string, lat:number, long: number}): THREE.Mesh {
 
 		const geometry = new THREE.SphereGeometry(20)
 		const material = new THREE.MeshBasicMaterial({ color: 0x00ff44 })
 		const point = new THREE.Mesh(geometry, material)
 		const spherical = new THREE.Spherical()
-		spherical.theta = 100
-		spherical.phi = 250
+		spherical.phi =lat 
+		spherical.theta =long 
+		//spherical.theta = 100
 		spherical.radius = 515
 		//point.position.setFromSpherical(100, 10, 509)
 		point.position.setFromSpherical(spherical)
-		point.userData = {'sala': 'teste'}
+		point.userData = {'sala': prox}
 		document.addEventListener('click', (e: MouseEvent) => {
 			const raycaster = new THREE.Raycaster()
 			raycaster.setFromCamera(this.mouse, this.camera)
 			if (raycaster.intersectObject(point).length > 0) {
 
-				console.log(point.userData)
+				this.sceneState = this.salaPath.get(prox)
+				this.createEnvironment()
+				this.createAllButtons()
 			}
 		})
 
@@ -84,10 +98,24 @@ export class SceneManager {
 		return point
 	}
 
+	private createAllButtons() {
+		if (this.buttonLeft) {
+			this.scene.remove(this.buttonLeft)
+		}
+		if (this.buttonRight) {
+
+			this.scene.remove(this.buttonRight)
+		}
+		this.buttonLeft = this.createButton(this.sceneState!.path[0])
+		this.buttonRight = this.createButton(this.sceneState!.path[1])
+		this.scene.add(this.buttonLeft)
+		this.scene.add(this.buttonRight)
+	}
+
 	private createEnvironment() {
 		const geometry = new THREE.SphereGeometry(500, 60, 40);
 		geometry.scale(1, 1, -1)
-		const material = new THREE.MeshBasicMaterial({ map: new THREE.TextureLoader().load(this.sceneState!.stateImage) });
+		const material = new THREE.MeshBasicMaterial({ map: new THREE.TextureLoader().load(`/assets/${this.sceneState!.stateName}.JPG`) });
 		//const material = new THREE.MeshBasicMaterial({ map: new THREE.TextureLoader().load('/assets/image-1.jpg') });
 		const skyBox = new THREE.Mesh(geometry, material);
 		this.scene.add(skyBox)

@@ -1,4 +1,4 @@
 export interface SceneState {
-	stateImage: string
+	stateName: string
 	path: {prox: string, lat: number, long: number}[]
 }

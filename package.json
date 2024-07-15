@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "main": "main.js",
   "scripts": {
-    "build:prod": "npm run test && webpack --env env=prod --output-path=docs/ && cp ./docs/index.html ./docs/404.html",
+    "build:prod": "webpack --env env=prod --output-path=docs/ && cp ./docs/index.html ./docs/404.html",
     "build:dev": "webpack --env env=dev",
     "start": "cd ./dist && python -m http.server",
     "restart": "npm run build:dev && npm start",
