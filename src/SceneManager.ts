@@ -12,7 +12,8 @@ export class SceneManager {
 	private readonly renderer: THREE.WebGLRenderer
 	private readonly mouse: THREE.Vector2
 	private sceneState: SceneState | undefined;
-	private readonly salaPath: Map<string, SceneState>;
+	private readonly salaPath: Map<string, SceneState>
+	private currentSkyBox: THREE.Mesh | undefined
 
 	constructor() {
 		this.scene = new THREE.Scene()
@@ -21,32 +22,21 @@ export class SceneManager {
 		this.controls = this.createControls()
 		this.mouse = new THREE.Vector2()
 		this.salaPath = new Map();
-		this.salaPath.set('sala-1', {stateName:'sala-1', path: [{prox: 'sala-7', lat: 400, long: 500}, {prox: 'sala-2', lat: 450, long: 50}]})
-		this.salaPath.set('sala-2', {stateName:'sala-2', path: [{prox: 'sala-1', lat: 400, long: 500}, {prox: 'sala-3', lat: 450, long: 50}]})
-		this.salaPath.set('sala-3', {stateName:'sala-3', path: [{prox: 'sala-2', lat: 500, long: 300}, {prox: 'sala-4', lat: 450, long: 50}]})
-		this.salaPath.set('sala-4', {stateName:'sala-4', path: [{prox: 'sala-3', lat: 350, long: 750}, {prox: 'sala-5', lat: 450, long: 300}]})
-		this.salaPath.set('sala-5', {stateName:'sala-5', path: [{prox: 'sala-4', lat: 550, long: 550}, {prox: 'sala-6', lat: 450, long: 50}]})
-		this.salaPath.set('sala-6', {stateName:'sala-6', path: [{prox: 'sala-5', lat: 400, long: 500}, {prox: 'sala-7', lat: 450, long: 50}]})
-		this.salaPath.set('sala-7', {stateName:'sala-7', path: [{prox: 'sala-6', lat: 400, long: 500}, {prox: 'sala-1', lat: 450, long: 50}]})
+		this.salaPath.set('sala-1', {stateName:'sala-1', material: this.loadMaterial('sala-1'), path: [{prox: 'sala-7', lat: 400, long: 500}, {prox: 'sala-2', lat: 450, long: 50}]})
+		this.salaPath.set('sala-2', {stateName:'sala-2', material: this.loadMaterial('sala-2'), path: [{prox: 'sala-1', lat: 400, long: 500}, {prox: 'sala-3', lat: 450, long: 50}]})
+		this.salaPath.set('sala-3', {stateName:'sala-3', material: this.loadMaterial('sala-3'), path: [{prox: 'sala-2', lat: 500, long: 300}, {prox: 'sala-4', lat: 450, long: 50}]})
+		this.salaPath.set('sala-4', {stateName:'sala-4', material: this.loadMaterial('sala-4'), path: [{prox: 'sala-3', lat: 350, long: 750}, {prox: 'sala-5', lat: 450, long: 300}]})
+		this.salaPath.set('sala-5', {stateName:'sala-5', material: this.loadMaterial('sala-5'), path: [{prox: 'sala-4', lat: 550, long: 550}, {prox: 'sala-6', lat: 450, long: 50}]})
+		this.salaPath.set('sala-6', {stateName:'sala-6', material: this.loadMaterial('sala-6'), path: [{prox: 'sala-5', lat: 400, long: 500}, {prox: 'sala-7', lat: 450, long: 50}]})
+		this.salaPath.set('sala-7', {stateName:'sala-7', material: this.loadMaterial('sala-7'), path: [{prox: 'sala-6', lat: 400, long: 500}, {prox: 'sala-1', lat: 450, long: 50}]})
 
 		this.sceneState = this.salaPath.get('sala-1')
 
 
 		this.createEnvironment()
-
-		this.createAllButtons()
-
-
 		this.renderer.setAnimationLoop(() => this.renderer.render(this.scene, this.camera))
 		this.renderer.setSize(window.innerWidth, window.innerHeight)
-
 		this.camera.position.z = 1;
-
-		// window.onresize = () => {
-		// 	this.camera.aspect = window.innerWidth / window.innerHeight;
-		// 	this.camera.updateProjectionMatrix();
-		// 	this.renderer.setSize(window.innerWidth, window.innerHeight)
-		// }
 		this.init()
 
 	}
@@ -90,7 +80,6 @@ export class SceneManager {
 
 				this.sceneState = this.salaPath.get(prox)
 				this.createEnvironment()
-				this.createAllButtons()
 			}
 		})
 
@@ -115,10 +104,16 @@ export class SceneManager {
 	private createEnvironment() {
 		const geometry = new THREE.SphereGeometry(500, 60, 40);
 		geometry.scale(1, 1, -1)
-		const material = new THREE.MeshBasicMaterial({ map: new THREE.TextureLoader().load(`./assets/${this.sceneState!.stateName}.JPG`) });
-		//const material = new THREE.MeshBasicMaterial({ map: new THREE.TextureLoader().load('/assets/image-1.jpg') });
-		const skyBox = new THREE.Mesh(geometry, material);
+		const material = this.sceneState!.material
+		const skyBox = new THREE.Mesh(geometry, material)
+		console.log(this.sceneState!.stateName)
+		if (this.currentSkyBox) {
+			this.scene.remove(this.currentSkyBox)
+		}
+
 		this.scene.add(skyBox)
+		this.currentSkyBox = skyBox
+		this.createAllButtons()
 	}
 
 	private mouseMove(e: MouseEvent) {
@@ -130,6 +125,10 @@ export class SceneManager {
 			this.camera.aspect = window.innerWidth / window.innerHeight;
 			this.camera.updateProjectionMatrix();
 			this.renderer.setSize(window.innerWidth, window.innerHeight)
+	}
+
+	private loadMaterial(name: string): THREE.MeshBasicMaterial {
+		return new THREE.MeshBasicMaterial({ map: new THREE.TextureLoader().load(`./assets/${name}.JPG`) });
 	}
 	
 }
