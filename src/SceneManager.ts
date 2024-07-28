@@ -2,9 +2,14 @@
 import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
 import { SceneState } from './SceneState'
+import { LoadingScreenManager } from './LoadingScreenManager';
+
+
+
 
 export class SceneManager {
 	private readonly controls: OrbitControls
+	private readonly loadingScreenManager = LoadingScreenManager.INSTANCE 
 	private buttonRight: THREE.Mesh | undefined
 	private buttonLeft: THREE.Mesh | undefined
 	private readonly scene: THREE.Scene
@@ -14,6 +19,7 @@ export class SceneManager {
 	private sceneState: SceneState | undefined;
 	private readonly salaPath: Map<string, SceneState>
 	private currentSkyBox: THREE.Mesh | undefined
+	private loadedSalas: number
 
 	constructor() {
 		this.scene = new THREE.Scene()
@@ -22,18 +28,9 @@ export class SceneManager {
 		this.controls = this.createControls()
 		this.mouse = new THREE.Vector2()
 		this.salaPath = new Map();
-		this.salaPath.set('sala-1', {stateName:'sala-1', material: this.loadMaterial('sala-1'), path: [{prox: 'sala-7', lat: 400, long: 500}, {prox: 'sala-2', lat: 450, long: 50}]})
-		this.salaPath.set('sala-2', {stateName:'sala-2', material: this.loadMaterial('sala-2'), path: [{prox: 'sala-1', lat: 400, long: 500}, {prox: 'sala-3', lat: 450, long: 50}]})
-		this.salaPath.set('sala-3', {stateName:'sala-3', material: this.loadMaterial('sala-3'), path: [{prox: 'sala-2', lat: 500, long: 300}, {prox: 'sala-4', lat: 450, long: 50}]})
-		this.salaPath.set('sala-4', {stateName:'sala-4', material: this.loadMaterial('sala-4'), path: [{prox: 'sala-3', lat: 350, long: 750}, {prox: 'sala-5', lat: 450, long: 300}]})
-		this.salaPath.set('sala-5', {stateName:'sala-5', material: this.loadMaterial('sala-5'), path: [{prox: 'sala-4', lat: 550, long: 550}, {prox: 'sala-6', lat: 450, long: 50}]})
-		this.salaPath.set('sala-6', {stateName:'sala-6', material: this.loadMaterial('sala-6'), path: [{prox: 'sala-5', lat: 400, long: 500}, {prox: 'sala-7', lat: 450, long: 50}]})
-		this.salaPath.set('sala-7', {stateName:'sala-7', material: this.loadMaterial('sala-7'), path: [{prox: 'sala-6', lat: 400, long: 500}, {prox: 'sala-1', lat: 450, long: 50}]})
+		this.loadedSalas = 0
+		
 
-		this.sceneState = this.salaPath.get('sala-1')
-
-
-		this.createEnvironment()
 		this.renderer.setAnimationLoop(() => this.renderer.render(this.scene, this.camera))
 		this.renderer.setSize(window.innerWidth, window.innerHeight)
 		this.camera.position.z = 1;
@@ -47,7 +44,24 @@ export class SceneManager {
 		document.addEventListener('mousemove', this.mouseMove.bind(this), false)
 
 		document.body.appendChild(this.renderer.domElement)
+
+		this.load()
+		this.sceneState = this.salaPath.get('sala-1')
+		
+		this.loadingScreenManager.beginLoading()
+
 	} 
+
+	private async load() {
+		this.salaPath.set('sala-1', {stateName:'sala-1', material: this.loadMaterial('sala-1'), path: [{ prox: 'sala-7', lat: 400, long: 500 }, { prox: 'sala-2', lat: 450, long: 50 }] })
+		this.salaPath.set('sala-2', {stateName:'sala-2', material: this.loadMaterial('sala-2'), path: [{prox: 'sala-1', lat: 400, long: 500}, {prox: 'sala-3', lat: 450, long: 50}]})
+		this.salaPath.set('sala-3', {stateName:'sala-3', material: this.loadMaterial('sala-3'), path: [{prox: 'sala-2', lat: 500, long: 300}, {prox: 'sala-4', lat: 450, long: 50}]})
+		this.salaPath.set('sala-4', {stateName:'sala-4', material: this.loadMaterial('sala-4'), path: [{prox: 'sala-3', lat: 350, long: 750}, {prox: 'sala-5', lat: 450, long: 300}]})
+		this.salaPath.set('sala-5', {stateName:'sala-5', material: this.loadMaterial('sala-5'), path: [{prox: 'sala-4', lat: 550, long: 550}, {prox: 'sala-6', lat: 450, long: 50}]})
+		this.salaPath.set('sala-6', {stateName:'sala-6', material: this.loadMaterial('sala-6'), path: [{prox: 'sala-5', lat: 400, long: 500}, {prox: 'sala-7', lat: 450, long: 50}]})
+		this.salaPath.set('sala-7', {stateName:'sala-7', material: this.loadMaterial('sala-7'), path: [{prox: 'sala-6', lat: 400, long: 500}, {prox: 'sala-1', lat: 450, long: 50}]})
+
+	}
 
 	private createControls(): OrbitControls {
 		const controls = new OrbitControls(this.camera, this.renderer.domElement)
@@ -128,7 +142,19 @@ export class SceneManager {
 	}
 
 	private loadMaterial(name: string): THREE.MeshBasicMaterial {
-		return new THREE.MeshBasicMaterial({ map: new THREE.TextureLoader().load(`./assets/${name}.JPG`) });
+		const texture = new THREE.TextureLoader().load(`./assets/${name}.JPG`, this.salasCounter.bind(this))
+
+		return new THREE.MeshBasicMaterial({ map: texture });
 	}
-	
+
+
+	private salasCounter() {
+		this.loadedSalas++
+
+		if (this.loadedSalas == 7) {
+			this.createEnvironment()
+			this.loadingScreenManager.endLoading()
+
+		}
+	}
 }

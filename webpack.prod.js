@@ -38,6 +38,11 @@ module.exports = {
 					from: './assets',
 					to: './assets',
 					force: true
+				},
+				{
+					from: './style.css',
+					to: './style.css',
+					force: true
 				}
 			]
 		}),
