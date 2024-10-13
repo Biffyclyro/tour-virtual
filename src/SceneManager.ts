@@ -20,6 +20,7 @@ export class SceneManager {
 	private readonly salaPath: Map<string, SceneState>
 	private currentSkyBox: THREE.Mesh | undefined
 	private loadedSalas: number
+	private readonly raycaster = new THREE.Raycaster()
 
 	constructor() {
 		this.scene = new THREE.Scene()
@@ -49,7 +50,6 @@ export class SceneManager {
 		this.sceneState = this.salaPath.get('sala-1')
 		
 		this.loadingScreenManager.beginLoading()
-
 	} 
 
 	private async load() {
@@ -87,13 +87,18 @@ export class SceneManager {
 		//point.position.setFromSpherical(100, 10, 509)
 		point.position.setFromSpherical(spherical)
 		point.userData = {'sala': prox}
+		point.name = "point"
 		document.addEventListener('click', (e: MouseEvent) => {
-			const raycaster = new THREE.Raycaster()
-			raycaster.setFromCamera(this.mouse, this.camera)
-			if (raycaster.intersectObject(point).length > 0) {
+			//const raycaster = new THREE.Raycaster()
+			this.raycaster.setFromCamera(this.mouse, this.camera)
+			this.raycaster.intersectObject(point).forEach(point => {
+				console.log(point.object.name)
+			})
+			if (this.raycaster.intersectObject(point).length > 0) {
 
 				this.sceneState = this.salaPath.get(prox)
 				this.createEnvironment()
+				console.log('click')
 			}
 		})
 
@@ -128,6 +133,9 @@ export class SceneManager {
 		this.scene.add(skyBox)
 		this.currentSkyBox = skyBox
 		this.createAllButtons()
+		this.camera.lookAt(new THREE.Vector3(55))
+		this.controls.target =new THREE.Vector3(55)
+		//this.controls.update()
 	}
 
 	private mouseMove(e: MouseEvent) {
